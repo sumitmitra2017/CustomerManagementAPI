@@ -19,7 +19,7 @@ class Customer {
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 	
-	@NotNull(message = "This field is required")
+	@NotNull(message = "Customer Name is required")
 	private String name;
 	
 	@Email(message = "Email is not valid", regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
@@ -29,8 +29,7 @@ class Customer {
     private Double annualSpend;
     
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime  lastPurchaseDate;    
-
+    private LocalDateTime  lastPurchaseDate;
   
     public Customer() {
         super();
@@ -72,7 +71,7 @@ class Customer {
 	
 	public Double getAnnualSpend() {
 		return annualSpend;
-	}
+	}	
 
 	public void setAnnualSpend(Double annualSpend) {
 		this.annualSpend = annualSpend;

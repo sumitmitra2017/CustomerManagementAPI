@@ -3,19 +3,38 @@ package com.customermanagement.customer;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.customermanagement.customer.CustomerServiceImpl.Tier;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+
 public class CustomerDTO {
 	
 	private UUID id;
+	@NotNull(message = "Customer Name is mandatory")
 	private String name;
+	@Email(message = "Email is not valid", regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
+	@NotNull(message = "Customer email is mandatory")
 	private String email;
 	private Double annualSpend;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime  lastPurchaseDate;
-	private String tier;
+	private Tier tier;
 	
-	// NoArgsConstructor
     public CustomerDTO() {
         super();
     }
+    
+	public CustomerDTO(String name, String email, Double annualSpend, LocalDateTime lastPurchaseDate, Tier tier) {
+		super();
+		this.name = name;
+		this.email = email;
+		this.annualSpend = annualSpend;
+		this.lastPurchaseDate = lastPurchaseDate;
+		this.tier = tier;
+	}
+	
 	/**
 	 * @return the id
 	 */
@@ -79,13 +98,13 @@ public class CustomerDTO {
 	/**
 	 * @return the tier
 	 */
-	public String getTier() {
+	public Tier getTier() {
 		return tier;
 	}
 	/**
 	 * @param tier the tier to set
 	 */
-	public void setTier(String tier) {
+	public void setTier(Tier tier) {
 		this.tier = tier;
 	}
 	

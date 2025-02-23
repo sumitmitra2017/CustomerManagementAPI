@@ -2,15 +2,17 @@ package com.customermanagement.customer;
 
 import java.util.UUID;
 
+import com.customermanagement.exceptionHandling.CustomerNotFoundException;
+
 public interface CustomerService {
 	
-	Customer saveCustomer(Customer cust);
+	CustomerDTO saveCustomer(CustomerDTO cust);
 	
-	CustomerDTO getCustomerById(UUID id);	
+	CustomerDTO getCustomerById(UUID id) throws CustomerNotFoundException;	
 	
-	CustomerDTO getCustomerByName(String name);
+	CustomerDTO getCustomerByName(String name) throws CustomerNotFoundException;
 
-	CustomerDTO getCustomerByEmail(String email);
+	CustomerDTO getCustomerByEmail(String email) throws CustomerNotFoundException;
 
 	String updateCustomerById(UUID id, CustomerDTO cust);
 

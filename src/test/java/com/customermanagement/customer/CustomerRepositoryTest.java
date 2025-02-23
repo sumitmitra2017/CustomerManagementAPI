@@ -11,11 +11,11 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.customermanagement.customer.CustomerServiceImpl.Tier;
 
 import jakarta.validation.*;
 
@@ -30,6 +30,8 @@ public class CustomerRepositoryTest {
 	
 	@Autowired
 	private CustomerRepository customerRepository;	
+
+    private ModelMapper modelMapper = new ModelMapper() ;
 	
 	CustomerServiceImpl customerServiceImpl = new CustomerServiceImpl() ;
 	
@@ -51,7 +53,7 @@ public class CustomerRepositoryTest {
 	@AfterEach
 	public void tearDown() {
 	    // Release test data after each test method
-		customerRepository.delete(testCustomer);
+		customerRepository.deleteById(testCustomer.getId());
 	}
 	
 	// Test for Create : Save customer operation
@@ -116,10 +118,11 @@ public class CustomerRepositoryTest {
 	    public void testCalculationForSilverTier() {
 		 DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 		 Customer customer = customerRepository.save(new Customer("John Doe", "John@Doe.com",100.00,LocalDateTime.parse("2024-05-20T12:37:00",formatter)));
-		 Customer savedCustomer = customerRepository.findById(customer.getId()).orElse(null);
-		 assertNotNull(savedCustomer);		    
-		 String tier = customerServiceImpl.calculateTier(savedCustomer);
-		 assertEquals("Silver", tier);
+		 Customer savedCustomer = this.customerRepository.findById(customer.getId()).orElse(null);
+		 assertNotNull(savedCustomer);	
+		 CustomerDTO customerDtoSaved = this.modelMapper.map(customer, CustomerDTO.class);
+		 Tier tier = customerServiceImpl.calculateTier(customerDtoSaved);
+		 assertEquals(Tier.SILVER, tier);
 		 
 	 }
 	 
@@ -128,11 +131,12 @@ public class CustomerRepositoryTest {
 	 @Test
 		public void testCalculationForGoldTier() {		 
 	    DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-		Customer customer = customerRepository.save(new Customer("John Doe", "John@Doe.com",5000.00,LocalDateTime.parse("2024-09-20T18:30:00",formatter)));
+	    Customer customer = customerRepository.save(new Customer("John Doe", "John@Doe.com",5000.00,LocalDateTime.parse("2024-09-20T18:30:00",formatter)));
 		Customer savedCustomer = customerRepository.findById(customer.getId()).orElse(null);
-		assertNotNull(savedCustomer);		    
-	    String tier = customerServiceImpl.calculateTier(savedCustomer);
-		assertEquals("Gold", tier);
+		assertNotNull(savedCustomer);
+		CustomerDTO customerDtoSaved = this.modelMapper.map(customer, CustomerDTO.class);
+		Tier tier = customerServiceImpl.calculateTier(customerDtoSaved);
+		assertEquals(Tier.GOLD, tier);
 			 
 	}
 		 
@@ -143,9 +147,10 @@ public class CustomerRepositoryTest {
 		DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 		Customer customer = customerRepository.save(new Customer("John Doe", "John@Doe.com",15000.00,LocalDateTime.parse("2025-02-11T14:20:00",formatter)));
 		Customer savedCustomer = customerRepository.findById(customer.getId()).orElse(null);
-		assertNotNull(savedCustomer);		    
-		String tier = customerServiceImpl.calculateTier(savedCustomer);
-		assertEquals("Platinum", tier);
+		assertNotNull(savedCustomer);
+		CustomerDTO customerDtoSaved = this.modelMapper.map(customer, CustomerDTO.class);
+		Tier tier = customerServiceImpl.calculateTier(customerDtoSaved);
+		assertEquals(Tier.PLATINUM, tier);
 				 
 	}
 	 

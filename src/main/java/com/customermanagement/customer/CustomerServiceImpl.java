@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.customermanagement.exceptionHandling.CustomerNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
@@ -23,82 +24,85 @@ public class CustomerServiceImpl implements CustomerService{
 	@Autowired
     private ModelMapper modelMapper;
 	
-	@Override
-	public Customer saveCustomer(Customer cust) {
-		logger.info("Inside saveCustomer method in CustomerServiceImpl cust:" +cust);
-		Customer custSavedToDB=this.custRepository.save(cust);
-		return custSavedToDB;
+	enum Tier {
+		SILVER,
+		GOLD,
+		PLATINUM;
 	}
 	
-	@Override
-	public CustomerDTO getCustomerById(UUID Id) {
+	public CustomerDTO saveCustomer(CustomerDTO cust) {
+		Customer customer = new Customer();
+		customer = this.modelMapper.map(cust, Customer.class);		
+		customer=this.custRepository.save(customer);		
+		CustomerDTO custSavedToDBDto = new CustomerDTO();
+		custSavedToDBDto = this.modelMapper.map(customer, CustomerDTO.class);		
+		Tier tier = calculateTier(custSavedToDBDto);
+		logger.info("Inside saveCustomer method in CustomerServiceImpl tier:" + tier);
+		custSavedToDBDto.setTier(tier);		
+		return custSavedToDBDto;
+	}
+	
+	
+	public CustomerDTO getCustomerById(UUID Id) throws CustomerNotFoundException {
 		logger.info("Inside getCustomerById method in CustomerServiceImpl Id:" +Id);		
 		CustomerDTO customerDto =new CustomerDTO();
-		String tier="";		
+		try {
 			Customer customer = custRepository.findById(Id).orElseThrow(EntityNotFoundException::new);
-			tier = calculateTier(customer);
+			if(customer != null) {
 			customerDto = this.modelMapper.map(customer, CustomerDTO.class);
-			customerDto.setTier(tier);			
-			return customerDto;
+			Tier tier = calculateTier(customerDto);
+			customerDto.setTier(tier);	
+			}
+			
+			} catch (EntityNotFoundException ex) {
+				
+				throw new CustomerNotFoundException("Customer not found with id : " + Id);
+			} 
+		return customerDto;
 	}
 			
 	
 	@Override
-	public CustomerDTO getCustomerByName(String name){
+	public CustomerDTO getCustomerByName(String name) throws CustomerNotFoundException {
 		logger.info("Inside getCustomerByName method in CustomerServiceImpl name:" +name);		
 		CustomerDTO customerDto =new CustomerDTO();
-		String tier="";
 		try {		
-		Customer customer = custRepository.findByNameIgnoreCase(name);
-		tier = calculateTier(customer);
-		customerDto = this.modelMapper.map(customer, CustomerDTO.class);
-		customerDto.setTier(tier);
-		
-		} catch (EntityNotFoundException ex) 
-			{
-			return customerDto;
-			}
+			Customer customer = custRepository.findByNameIgnoreCase(name);
+			if (customer != null) {
+				customerDto = this.modelMapper.map(customer, CustomerDTO.class);
+		        Tier tier = calculateTier(customerDto);
+		        customerDto.setTier(tier);
+				}
+			} catch (EntityNotFoundException ex) {
+				
+			throw new CustomerNotFoundException("Customer not found with name : " + name);
+		}
 		return customerDto;
 	}
 	
 	@Override
-	public CustomerDTO getCustomerByEmail(String email){
+	public CustomerDTO getCustomerByEmail(String email) throws CustomerNotFoundException{
 		logger.info("Inside getCustomerByEmail method in CustomerServiceImpl email:" +email);
 		CustomerDTO customerDto =new CustomerDTO();
-		String tier="";
 		try {		
 			Customer customer = custRepository.findByEmailIgnoreCase(email);
-			tier = calculateTier(customer);
-			customerDto = this.modelMapper.map(customer, CustomerDTO.class);
-			customerDto.setTier(tier);
+			if (customer != null) {
+				customerDto = this.modelMapper.map(customer, CustomerDTO.class);
+				Tier tier = calculateTier(customerDto);
+				customerDto.setTier(tier);
+			}
 			
-			} catch (EntityNotFoundException ex) 
-				{
-				return customerDto;
-				}
+			} catch (EntityNotFoundException ex) {
+				
+				throw new CustomerNotFoundException("Customer not found with email : " + email);
+			}
 			return customerDto;
 	}
 	
-	public String calculateTier(Customer cust) {
-		String tier="";
-		LocalDateTime lastPurchaseDate=cust.getLastPurchaseDate();
-		long monthsBetween = ChronoUnit.MONTHS.between(
-				lastPurchaseDate, 
-				LocalDateTime.now()
-			    );		
-		Double annualSpend=cust.getAnnualSpend();
-		if(annualSpend != null && annualSpend<1000)
-		     tier="Silver";
-		else if ((annualSpend != null && annualSpend>=1000 && annualSpend<10000) && monthsBetween <=12)
-			 tier="Gold";
-		else if ((annualSpend != null && annualSpend>=10000) && monthsBetween <= 6)
-			 tier="Platinum";
-		
-		return tier;
-	}
+	
 		
 	@Override
-	public String updateCustomerById(UUID Id, CustomerDTO cust) {
+	public String updateCustomerById(UUID Id, CustomerDTO cust)  {
 		logger.info("Inside updateCustomerById method in CustomerServiceImpl Id:" +Id);
 		try {
 		Customer customer = custRepository.findById(Id).orElseThrow(EntityNotFoundException::new);
@@ -109,10 +113,9 @@ public class CustomerServiceImpl implements CustomerService{
 			customer.setLastPurchaseDate(cust.getLastPurchaseDate());
 			custRepository.save(customer);			
 			} 
-		} catch (EntityNotFoundException ex) 
-			{
+		} catch (EntityNotFoundException ex) {
 				return "Customer not found";
-			}
+		}
 		return "Customer details updated.";			
 	}
 	
@@ -120,12 +123,39 @@ public class CustomerServiceImpl implements CustomerService{
 	public String deleteCustomerById(UUID Id) {
 		logger.info("Inside deleteCustomerById method in CustomerServiceImpl Id:" +Id);	
 		try {			
-				Customer customer = this.custRepository.findById(Id).orElseThrow(EntityNotFoundException::new);			
+				this.custRepository.findById(Id).orElseThrow(EntityNotFoundException::new);			
 		        this.custRepository.deleteById(Id);		
-	    } catch (EntityNotFoundException ex) 
-		{
-			return "Customer not found";
+	    } catch (EntityNotFoundException ex) {
+			
+	    	return "Customer not found";
 		}
 		return "Customer deleted with Id:"+ Id;		
+	}
+	
+	public Tier calculateTier(CustomerDTO customer) {
+		
+		LocalDateTime lastPurchaseDate=customer.getLastPurchaseDate();
+		Double annualSpend=customer.getAnnualSpend();
+		Tier tier = null;
+		
+		if(lastPurchaseDate != null && annualSpend != null ) {
+		long monthsBetween = ChronoUnit.MONTHS.between(
+				lastPurchaseDate, 
+				LocalDateTime.now()
+			    );	
+		
+		if(annualSpend != null && annualSpend < 1000) {
+				tier=Tier.SILVER;
+			}
+		else if ((annualSpend != null && annualSpend >= 1000 && annualSpend < 10000) && monthsBetween <=12) {
+			    tier=Tier.GOLD;
+			 }
+		else if ((annualSpend != null && annualSpend >= 10000) && monthsBetween <= 6) {
+			    tier=Tier.PLATINUM;
+		}
+		
+		}
+			 
+		return tier;
 	}
 }
