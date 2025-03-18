@@ -99,4 +99,14 @@ http://localhost:8080/api-docs
 ## To access swagger ui:-
 
 http://localhost:8080/swagger-ui/index.html
-# CustomerManagementAPI
+
+## Docker deployment:-
+
+https://hub.docker.com/repository/docker/sumitmitra/customermanagement-rest-api/general
+
+##### docker commands:
+
+docker pull sumitmitra/customermanagement-rest-api:dockerfile1
+
+docker run -d -p 8080:8080 sumitmitra/customermanagement-rest-api:dockerfile1
+
