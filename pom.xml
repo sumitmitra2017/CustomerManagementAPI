@@ -11,6 +11,7 @@
 	<groupId>com</groupId>
 	<artifactId>customermanagement</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
 	<name>customermanagement</name>
 	<description>CustomerManagement API project for Spring Boot</description>
 	<url/>
@@ -84,6 +85,7 @@
 	</dependencies>
 
 	<build>
+	    <finalName>customermanagement-rest-api</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
